@@ -1,0 +1,4 @@
+.idea/*
+__pycache__/*
+face_landmarks.py
+hand_gesture.py
