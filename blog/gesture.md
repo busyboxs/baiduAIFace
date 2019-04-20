@@ -99,21 +99,16 @@ POST 方式调用，请求 URL 为 https://aip.baidubce.com/rest/2.0/image-class
 ```python
 # 获取 token
 def get_token_key():
-    token_key = ''
     # client_id 为官网获取的AK， client_secret 为官网获取的SK
-    client_id = '【百度云应用的AK】'
-    client_secret = '【百度云应用的SK】'
-
-    host = f'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials' \
+    client_id = '【百度云应用的AK】'  # API key
+    client_secret = '【百度云应用的SK】'  # Secret key
+    url = f'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials' \
         f'&client_id={client_id}&client_secret={client_secret}'
-
-    request = Request(host)
-    request.add_header('Content-Type', 'application/json; charset=UTF-8')
-    response = urlopen(request)
-    token_content = response.read()
-    if token_content:
-        token_info = json.loads(token_content)
-        token_key = token_info['access_token']
+    headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    res = requests.post(url, headers=headers)
+    token_content = res.json()
+    assert "error" not in token_content, f"{token_content['error_description']}"
+    token_key = token_content['access_token']
     return token_key
 ```
 
@@ -126,13 +121,13 @@ def get_hand_info(image_base64, token_key):
     request_url = "https://aip.baidubce.com/rest/2.0/image-classify/v1/gesture"
     params_d = dict()
     params_d['image'] = str(image_base64, encoding='utf-8')
-    params = urlencode(params_d)
     access_token = token_key
     request_url = request_url + "?access_token=" + access_token
     res = requests.post(url=request_url,
-                        data=params,
+                        data=params_d,
                         headers={'Content-Type': 'application/x-www-form-urlencoded'})
     data = res.json()
+    assert 'error_code' not in data, f'Error: {data["error_msg"]}'
     return data
 ```
 

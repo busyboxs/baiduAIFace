@@ -1,9 +1,4 @@
 # -*- coding:utf-8 -*-
-import urllib
-from urllib.request import urlopen, Request
-from urllib.parse import urlencode
-import json
-from pprint import pprint
 import base64
 from math import atan2, degrees
 import cv2
@@ -47,21 +42,16 @@ def angle_between(p1, p2):
 
 
 def get_token_key():
-    token_key = ''
     # client_id 为官网获取的AK， client_secret 为官网获取的SK
     client_id = '【百度云应用的AK】'  # API key
     client_secret = '【百度云应用的SK】'  # Secret key
-
-    host = f'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials' \
+    url = f'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials' \
         f'&client_id={client_id}&client_secret={client_secret}'
-
-    request = Request(host)
-    request.add_header('Content-Type', 'application/json; charset=UTF-8')
-    response = urlopen(request)
-    token_content = response.read()
-    if token_content:
-        token_info = json.loads(token_content)
-        token_key = token_info['access_token']
+    headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    res = requests.post(url, headers=headers)
+    token_content = res.json()
+    assert "error" not in token_content, f"{token_content['error_description']}"
+    token_key = token_content['access_token']
     return token_key
 
 
@@ -87,18 +77,13 @@ def get_face_info(image_base64, token_key):
     params_d['image_type'] = 'BASE64'
     params_d['face_field'] = 'landmark'
     params_d['max_face_num'] = 10
-    params = json.dumps(params_d).encode('utf-8')
     access_token = token_key
     request_url = request_url + "?access_token=" + access_token
-    request = Request(url=request_url, data=params)
-    request.add_header('Content-Type', 'application/json')
-    response = urlopen(request)
-    content = response.read()
-    if content:
-        data = json.loads(content)
-        # assert data['error_code'] == 0, data
-        # pprint(data)
-        return data['result']
+    headers = {'Content-Type': 'application/json'}
+    r = requests.post(url=request_url, data=params_d, headers=headers)
+    content = r.json()
+    assert content['error_code'] == 0, f'Error: {content["error_msg"]}'
+    return content['result']
 
 
 def get_face_num(data):
@@ -160,13 +145,13 @@ def get_hand_info(image_base64, token_key):
     request_url = "https://aip.baidubce.com/rest/2.0/image-classify/v1/gesture"
     params_d = dict()
     params_d['image'] = str(image_base64, encoding='utf-8')
-    params = urlencode(params_d)
     access_token = token_key
     request_url = request_url + "?access_token=" + access_token
     res = requests.post(url=request_url,
-                        data=params,
+                        data=params_d,
                         headers={'Content-Type': 'application/x-www-form-urlencoded'})
     data = res.json()
+    assert 'error_code' not in data, f'Error: {data["error_msg"]}'
     return data
 
 
